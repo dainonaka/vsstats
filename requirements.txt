@@ -1,2 +1,8 @@
 Flask==0.12.2
+Flask-Cors==3.0.3
+Flask-Login==0.4.1
+Flask-SQLAlchemy==2.4.0
 gunicorn==19.9.0
+Hamlish-Jinja==0.3.3
+SQLAlchemy==1.2.1
+Werkzeug==0.14.1
