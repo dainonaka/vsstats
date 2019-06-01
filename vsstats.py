@@ -91,7 +91,7 @@ def get_db():
 @login_required
 def index():
     entries = get_db().execute('select * from records inner join users on records.user = users.id order by id desc limit 10').fetchall() # 追加
-    return render_template('index.haml', entries=entries) # 変更
+    return render_template('index.haml', entries=entries, current_user=current_user) # 変更
 
 @app.route('/post', methods=['POST'])
 @login_required

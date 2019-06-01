@@ -12,7 +12,8 @@
             【敗北】
           しました。
           コメント：{{ entry.comment | safe }}
-          
+    %p
+      ↓{{ current_user.name | safe }}さん、戦績を入力しましょう！
     %form(action="/post" method="POST")
       %input(type="text" name="opponent" placeholder="対戦相手（10文字まで）")
       %br
