@@ -1,0 +1,45 @@
+%html
+  %head
+    %title
+      マイページ
+  %body
+    %h1
+      {{ user.name | safe }}さんの戦績
+    %h5
+      ユーザー登録日：{{ user.date[:-7] | safe }}
+    
+    %h2
+    　今月の戦績：
+      {{ wincount.wincount | safe }}
+      勝
+      {{ losecount.losecount | safe }}
+      敗
+
+    %h2
+    　累計戦績ポイント：
+      {{ totalpoint.totalpoint | safe }}
+
+    %h2
+      対戦記録
+    %ul.entries
+      -for entry in entries:
+        %li
+          {{ entry.date[:-7] | safe }}
+          【{{ entry.name | safe }}】さんが
+          【{{ entry.opponent | safe }}】さんに
+          -if entry.win == 2
+            【勝利】
+          -else
+            【敗北】
+          しました。
+          コメント：{{ entry.comment | safe }}
+
+    
+    %p
+      %a(href="/")
+        ホーム
+    %p
+      %a(href="/logout")
+        ログアウト
+
+    

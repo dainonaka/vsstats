@@ -1,13 +1,14 @@
 from flask import Flask, request, Response, abort, render_template, g, redirect, url_for
 from hamlish_jinja import HamlishExtension
 from sqlalchemy.orm import synonym
+from sqlalchemy.sql import func
 from werkzeug import ImmutableDict, check_password_hash, generate_password_hash
 import os
 import sqlite3
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, date
 
 
 class FlaskWithHamlish(Flask):
@@ -101,10 +102,38 @@ def add_entry():
     entry.win = request.form["win"]
     entry.opponent = request.form['opponent']
     entry.comment = request.form['comment']
-    entry.date = datetime.now()
+    entry.date = datetime.now().replace(microsecond=0)
     db.session.add(entry)
     db.session.commit()
     return redirect(url_for('index'))
+
+@app.route('/mypage/<id>')
+@login_required
+def mypage(id=id):
+    startmonth = str(date.today().replace(day=1))
+    print(startmonth)
+    entries = get_db().execute(f'select * from records inner join users on records.user = users.id where user = {id} order by id desc limit 100').fetchall() # 追加
+    user = get_db().execute(f'select name, date from users where id = {id}').fetchall()
+    totalpoint = get_db().execute(f'select sum(win) as totalpoint from records where user = {id}').fetchall() + [0]
+    wincount = get_db().execute(
+        f'''select count(id) as wincount 
+         from records where user = {id} and win = 2
+         and strftime("%Y-%m-%d", date) >= "{startmonth}"''').fetchall() + [0]
+    losecount = get_db().execute(
+        f'''select count(id) as losecount
+         from records where user = {id} and win = 1
+          and strftime("%Y-%m-%d", date) >= "{startmonth}"''').fetchall() + [0]
+
+    print(len(user))
+    return render_template('mypage.haml',
+                        entries=entries,
+                        user=user[0],
+                        current_user=current_user,
+                        totalpoint=totalpoint[0],
+                        wincount=wincount[0],
+                        losecount=losecount[0],
+                        startmonth=startmonth)
+
 
 @app.route('/createuser', methods=["GET", "POST"])
 def createuser():
@@ -117,7 +146,7 @@ def createuser():
             user = User()
             user.name = request.form["username"]
             user.password = request.form["password"]
-            user.date = datetime.now()
+            user.date = datetime.now().replace(microsecond=0)
             db.session.add(user)
             db.session.commit()
             return Response(f'''
