@@ -16,7 +16,7 @@
             {{ entry.User.name | safe }}
           】さんが
           【{{ entry.Entry.opponent | safe }}】さんに
-          -if entry.win == 2
+          -if entry.Entry.win == 2
             【勝利】
           -else
             【敗北】
