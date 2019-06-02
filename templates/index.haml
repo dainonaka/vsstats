@@ -10,18 +10,18 @@
     %ul.entries
       -for entry in entries:
         %li
-          {{ entry.date | safe }}
+          {{ entry.Entry.date | safe }}
           【
-          %a(href="/mypage/{{ entry.user | safe }}")
-            {{ entry.name | safe }}
+          %a(href="/mypage/{{ entry.User.id | safe }}")
+            {{ entry.User.name | safe }}
           】さんが
-          【{{ entry.opponent | safe }}】さんに
+          【{{ entry.Entry.opponent | safe }}】さんに
           -if entry.win == 2
             【勝利】
           -else
             【敗北】
           しました。
-          コメント：{{ entry.comment | safe }}
+          コメント：{{ entry.Entry.comment | safe }}
     %h2
       ↓{{ current_user.name | safe }}さん、戦績を入力しましょう！
     %form(action="/post" method="POST")

@@ -4,7 +4,6 @@ from sqlalchemy.orm import synonym
 from sqlalchemy.sql import func
 from werkzeug import ImmutableDict, check_password_hash, generate_password_hash
 import os
-import sqlite3
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user, UserMixin
 from collections import defaultdict
@@ -31,7 +30,6 @@ def unauthorized_callback():
 
 
 db_uri = os.environ.get('DATABASE_URL') # or "sqlite:///" + os.path.join(app.root_path, 'vsstats.db')
-print(db_uri) 
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri 
 db = SQLAlchemy(app) 
@@ -49,7 +47,7 @@ class User(UserMixin, db.Model):
     __tablename__ = "users" 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.VARCHAR(10), nullable=False, unique=True)
-    _password = db.Column(db.VARCHAR(20), nullable=False) 
+    _password = db.Column(db.VARCHAR(65535), nullable=False) 
     date = db.Column(db.DATE, nullable=False) 
 
     def _get_password(self):
@@ -77,19 +75,6 @@ class User(UserMixin, db.Model):
             return None, False
         return user, user.check_password(password)
 
-
-def connect_db(tuple=False):
-    db_path = os.path.join(app.root_path, 'vsstats.db')
-    rv = sqlite3.connect(db_path)
-    if not tuple:
-        rv.row_factory = sqlite3.Row
-    return rv
-
-def get_db(tuple=False):
-    if not hasattr(g, 'sqlite_db'):
-        g.sqlite_db = connect_db(tuple)
-    return g.sqlite_db
-
 def injection_check(input):
     if not str(input).isdecimal():
         return abort(404)
@@ -97,7 +82,7 @@ def injection_check(input):
 @app.route('/')
 @login_required
 def index():
-    entries = get_db().execute('select * from records inner join users on records.user = users.id order by id desc limit 10').fetchall() # 追加
+    entries = db.session.query(Entry, User).join(Entry, Entry.user==User.id).all() # 追加
     return render_template('index.haml', entries=entries, current_user=current_user) # 変更
 
 @app.route('/post', methods=['POST'])
@@ -117,26 +102,20 @@ def add_entry():
 @login_required
 def mypage(id=id):
     injection_check(id)
-    startmonth = str(date.today().replace(day=1))
-    entries = get_db().execute(f'select * from records inner join users on records.user = users.id where user = {id} order by id desc limit 100').fetchall() # 追加
-    user = get_db().execute(f'select * from users where id = {id}').fetchall()
-    totalpoint = get_db().execute(f'select sum(win) as totalpoint from records where user = {id}').fetchall() + [0]
-    wincount = get_db().execute(
-        f'''select count(id) as wincount 
-         from records where user = {id} and win = 2
-         and strftime("%Y-%m-%d", date) >= "{startmonth}"''').fetchall() + [0]
-    losecount = get_db().execute(
-        f'''select count(id) as losecount
-         from records where user = {id} and win = 1
-          and strftime("%Y-%m-%d", date) >= "{startmonth}"''').fetchall() + [0]
-
+    startmonth = date.today().replace(day=1)
+    entries = db.session.query(Entry).filter(Entry.user==id).limit(100).all()
+    user = db.session.query(User).filter(User.id==id).one()
+    totalpoint = db.session.query(Entry.win).filter(Entry.user==id).all()
+    monthpoint = db.session.query(Entry.win).filter(Entry.user==id and Entry.date>=startmonth).all()
+    wincount = monthpoint.count((2,))
+    losecount = monthpoint.count((1,))
     return render_template('mypage.haml',
                         entries=entries,
-                        user=user[0],
+                        user=user,
                         current_user=current_user,
-                        totalpoint=totalpoint[0],
-                        wincount=wincount[0],
-                        losecount=losecount[0],
+                        totalpoint=sum([point[0] for point in totalpoint]),
+                        wincount=wincount,
+                        losecount=losecount,
                         startmonth=startmonth)
 
 @app.route('/edit/<id>', methods=["POST"])
@@ -205,12 +184,6 @@ def logout():
     ログアウトしました<br />
     <a href="/login">ログイン</a>
     ''')
-
-
-@app.teardown_appcontext
-def close_db(error):
-    if hasattr(g, 'sqlite_db'):
-        g.sqlite_db.close()
 
 if __name__ == "__main__":
     app.run()

@@ -10,14 +10,14 @@
     
     %h2
     　今月の戦績：
-      {{ wincount.wincount | safe }}
+      {{ wincount | safe }}
       勝
-      {{ losecount.losecount | safe }}
+      {{ losecount | safe }}
       敗
 
     %h2
     　累計戦績ポイント：
-      {{ totalpoint.totalpoint | safe }}
+      {{ totalpoint | safe }}
 
     %h2
       対戦記録
@@ -25,7 +25,7 @@
       -for entry in entries:
         %li
           {{ entry.date | safe }}
-          【{{ entry.name | safe }}】さんが
+          【{{ user.name | safe }}】さんが
           【{{ entry.opponent | safe }}】さんに
           -if entry.win == 2
             【勝利】
