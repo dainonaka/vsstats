@@ -77,16 +77,21 @@ class User(UserMixin, db.Model):
         return user, user.check_password(password)
 
 
-def connect_db():
+def connect_db(tuple=False):
     db_path = os.path.join(app.root_path, 'vsstats.db')
     rv = sqlite3.connect(db_path)
-    rv.row_factory = sqlite3.Row
+    if not tuple:
+        rv.row_factory = sqlite3.Row
     return rv
 
-def get_db():
+def get_db(tuple=False):
     if not hasattr(g, 'sqlite_db'):
-        g.sqlite_db = connect_db()
+        g.sqlite_db = connect_db(tuple)
     return g.sqlite_db
+
+def injection_check(input):
+    if not str(input).isdecimal():
+        return abort(404)
 
 @app.route('/')
 @login_required
@@ -110,10 +115,10 @@ def add_entry():
 @app.route('/mypage/<id>')
 @login_required
 def mypage(id=id):
+    injection_check(id)
     startmonth = str(date.today().replace(day=1))
-    print(startmonth)
     entries = get_db().execute(f'select * from records inner join users on records.user = users.id where user = {id} order by id desc limit 100').fetchall() # 追加
-    user = get_db().execute(f'select name, date from users where id = {id}').fetchall()
+    user = get_db().execute(f'select * from users where id = {id}').fetchall()
     totalpoint = get_db().execute(f'select sum(win) as totalpoint from records where user = {id}').fetchall() + [0]
     wincount = get_db().execute(
         f'''select count(id) as wincount 
@@ -124,7 +129,6 @@ def mypage(id=id):
          from records where user = {id} and win = 1
           and strftime("%Y-%m-%d", date) >= "{startmonth}"''').fetchall() + [0]
 
-    print(len(user))
     return render_template('mypage.haml',
                         entries=entries,
                         user=user[0],
@@ -133,6 +137,20 @@ def mypage(id=id):
                         wincount=wincount[0],
                         losecount=losecount[0],
                         startmonth=startmonth)
+
+@app.route('/edit/<id>', methods=["POST"])
+@login_required
+def entryedit(id):
+    injection_check(id)
+    if request.form["command"] == "削除":
+        user_id = get_db(True).execute(f'select user from records where id = {id}').fetchall()[0]
+        if user_id[0] == current_user.id:
+            db.session.query(Entry).filter(Entry.id==id).delete()
+            db.session.commit()
+        else:
+            return abort(401)
+    
+    return redirect(f'mypage/{current_user.id}')
 
 
 @app.route('/createuser', methods=["GET", "POST"])
@@ -149,11 +167,16 @@ def createuser():
             user.date = datetime.now().replace(microsecond=0)
             db.session.add(user)
             db.session.commit()
-            return Response(f'''
-            account created!<br />
-            <a href="{url_for('index')}">index</a><br />
-            <a href="{url_for('logout')}">logout</a>
-            ''')
+
+            user, authenticated = User.auth(db.session.query, request.form["username"], request.form["password"])
+
+            if authenticated:
+                login_user(user, remember=True)
+                return redirect(url_for('index'))
+            
+            else:
+                return redirect(url_for('login'))
+                
         else:
             return abort(401)
     else:
