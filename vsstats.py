@@ -107,7 +107,7 @@ def add_entry():
     entry.win = request.form["win"]
     entry.opponent = request.form['opponent']
     entry.comment = request.form['comment']
-    entry.date = datetime.now().replace(microsecond=0)
+    entry.date = date.today()
     db.session.add(entry)
     db.session.commit()
     return redirect(url_for('index'))
@@ -164,7 +164,7 @@ def createuser():
             user = User()
             user.name = request.form["username"]
             user.password = request.form["password"]
-            user.date = datetime.now().replace(microsecond=0)
+            user.date = date.today()
             db.session.add(user)
             db.session.commit()
 
