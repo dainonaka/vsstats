@@ -42,14 +42,14 @@ class Entry(db.Model):
     win = db.Column(db.Integer) 
     opponent = db.Column(db.VARCHAR(10)) 
     comment = db.Column(db.VARCHAR(20))
-    date = db.Column(db.DATETIME, nullable=False) 
+    date = db.Column(db.DATE, nullable=False) 
 
 class User(UserMixin, db.Model): 
     __tablename__ = "users" 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.VARCHAR(10), nullable=False, unique=True)
     _password = db.Column(db.VARCHAR(20), nullable=False) 
-    date = db.Column(db.DATETIME, nullable=False) 
+    date = db.Column(db.DATE, nullable=False) 
 
     def _get_password(self):
         return self._password

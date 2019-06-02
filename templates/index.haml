@@ -10,7 +10,7 @@
     %ul.entries
       -for entry in entries:
         %li
-          {{ entry.date[:-7] | safe }}
+          {{ entry.date | safe }}
           【
           %a(href="/mypage/{{ entry.user | safe }}")
             {{ entry.name | safe }}

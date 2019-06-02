@@ -6,7 +6,7 @@
     %h1
       {{ user.name | safe }}さんの戦績
     %h5
-      ユーザー登録日：{{ user.date[:-7] | safe }}
+      ユーザー登録日：{{ user.date | safe }}
     
     %h2
     　今月の戦績：
@@ -24,7 +24,7 @@
     %ul.entries
       -for entry in entries:
         %li
-          {{ entry.date[:-7] | safe }}
+          {{ entry.date | safe }}
           【{{ entry.name | safe }}】さんが
           【{{ entry.opponent | safe }}】さんに
           -if entry.win == 2
@@ -33,7 +33,7 @@
             【敗北】
           しました。
           コメント：{{ entry.comment | safe }}
-          -if user.id == current_user.id and entry.date[:-15] > startmonth:
+          -if user.id == current_user.id and entry.date > startmonth:
             %form(action="/edit/{{ entry.id | safe }}" method="POST" style="display: inline")
               %input(type="text" name="command" placeholder="削除と入力して削除")
     
