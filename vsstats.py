@@ -30,7 +30,8 @@ def unauthorized_callback():
     return redirect(url_for('login'))
 
 
-db_uri = db_uri = os.environ.get('DATABASE_URL') or "sqlite:///" + os.path.join(app.root_path, 'vsstats.db') 
+db_uri = os.environ.get('DATABASE_URL') # or "sqlite:///" + os.path.join(app.root_path, 'vsstats.db')
+print(db_uri) 
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri 
 db = SQLAlchemy(app) 
