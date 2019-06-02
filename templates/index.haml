@@ -11,7 +11,10 @@
       -for entry in entries:
         %li
           {{ entry.date[:-7] | safe }}
-          【{{ entry.name | safe }}】さんが
+          【
+          %a(href="/mypage/{{ entry.user | safe }}")
+            {{ entry.name | safe }}
+          】さんが
           【{{ entry.opponent | safe }}】さんに
           -if entry.win == 2
             【勝利】

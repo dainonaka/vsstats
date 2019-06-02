@@ -33,11 +33,15 @@
             【敗北】
           しました。
           コメント：{{ entry.comment | safe }}
-          {{ entry.date[:-15] }}
           -if user.id == current_user.id and entry.date[:-15] > startmonth:
             %form(action="/edit/{{ entry.id | safe }}" method="POST" style="display: inline")
               %input(type="text" name="command" placeholder="削除と入力して削除")
     
+    -if not user.id == current_user.id
+      %p
+        %a(href="/mypage/{{ current_user.id | safe }}")
+          マイページ
+
     %p
       %a(href="/")
         ホーム
